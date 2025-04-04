@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #f5f7fa;
+        }
+        #header {
+            background: #6e48aa;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        #exit-hint {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        #chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+        }
+        .user-message {
+            align-self: flex-end;
+            background: #6e48aa;
+            color: white;
+        }
+        .bot-message {
+            align-self: flex-start;
+            background: #f0f0f0;
+            color: #333;
+        }
+        #input-container {
+            display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        #user-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+        #send-button {
+            margin-left: 10px;
+            padding: 0 25px;
+            background: #6e48aa;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>DeepSeek Chat</h1>
+        <div id="exit-hint">Type "exit" to quit</div>
+    </div>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const chatHistory = [];
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}-message`;
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleExit() {
+            addMessage('bot', 'Goodbye! Closing the chat...');
+            userInput.disabled = true;
+            sendButton.disabled = true;
+            setTimeout(() => {
+                window.close(); 
+                document.body.innerHTML = '<h1 style="text-align:center;margin-top:50px;">Chat ended</h1>';
+            }, 1500);
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            addMessage('user', message);
+            chatHistory.push({ role: 'user', content: message });
+            userInput.value = '';
+
+            if (message.toLowerCase() === 'exit') {
+                handleExit();
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+                
+                const data = await response.json();
+                const botReply = data.choices[0].message.content;
+                
+                addMessage('bot', botReply);
+                chatHistory.push({ role: 'assistant', content: botReply });
+            } catch (error) {
+                addMessage('bot', 'Error: ' + error.message);
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        setTimeout(() => {
+            addMessage('bot', "Hello! I'm DeepSeek Chat. How can I help you today?");
+        }, 500);
+    </script>
+</body>
+</html>
