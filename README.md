@@ -1,6 +1,6 @@
 # DeepSeek Chatbot
 
-A simple AI chatbot solution featuring both web and command-line interfaces powered by DeepSeek's API.
+A simple AI chatbot featuring both web and command-line interfaces powered by DeepSeek's API.
 
 ## Features
 
